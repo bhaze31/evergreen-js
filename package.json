@@ -1,0 +1,25 @@
+{
+  "name": "evergreenjs",
+  "version": "0.1.0",
+  "description": "a markdown language super set that includes classes and visual layout elements",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc mocha"
+  },
+  "keywords": [
+    "markdown",
+    "md",
+    "blog",
+    "post",
+    "evergreen"
+  ],
+  "author": "Brian Hasenstab",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "jsdom": "16.2.2",
+    "jsdom-global": "3.0.2",
+    "mocha": "^7.1.2",
+    "nyc": "^15.0.1"
+  }
+}
