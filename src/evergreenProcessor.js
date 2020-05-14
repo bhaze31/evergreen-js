@@ -48,11 +48,25 @@ class EvergreenProcessor {
     // Div elements
     this.inDiv = false;
     this.currentDiv;
-    this.divMatch = new RegExp(/^<<-[A-Za-z0-9]{3}/)
+    this.divMatch = new RegExp(/^<<-[A-Za-z0-9]{3}/);
+
+    // Table elements
+    this.currentTable = null;
+    this.inTable = false;
+    this.tableMatch = new RegExp(/^\|[\w\s-_\:\|]+\|/);
+    this.tableHeaderMatch = new RegExp(/^\|(\:?-{3,}\:?\|)+$/);
+    this.centerTableMatch = new RegExp(/\:-{3,}\:/);
+    this.leftTableMatch = new RegExp(/\:-{3,}$/);
+    this.rightTableMatch = new RegExp(/^-{3,}\:/);
+    this.tableAlignments = {
+      left: 'left',
+      center: 'center',
+      right: 'right'
+    };
 
     // Identifier elements
-    this.identifierMatch = new RegExp(/\{[\w-_\s\.#]+\}$/)
-    this.parentIdentifierMatch = new RegExp(/\{\{[\w-_\s\.#]+\}\}$/)
+    this.identifierMatch = new RegExp(/\{[\w-_\s\.#]+\}$/);
+    this.parentIdentifierMatch = new RegExp(/\{\{[\w-_\s\.#]+\}\}$/);
   };
 
   resetAllSpecialElements() {
@@ -70,6 +84,9 @@ class EvergreenProcessor {
     this.currentSubQuote = 0;
     this.shouldAppendParagraph = false;
 
+    // Table elements
+    this.inTable = false;
+    this.currentTable = null;
   };
 
   updateLines(lines) {
@@ -376,6 +393,98 @@ class EvergreenProcessor {
     }
   };
 
+  parseTableRow(line) {
+    var tableItems = [];
+    line.split('|').filter((item) => !!item).forEach((item) => {
+      // TODO: Add rowspan
+      // TODO: Add colspan
+      // TODO: Add id/classes
+      let element = {
+        element: 'td',
+        alignment: this.tableAlignments.left,
+        ...this.parseLinks(item)
+      };
+
+      tableItems.push(element);
+    });
+
+    return tableItems;
+  }
+
+  parseTable(line) {
+    if (this.inTable) {
+      if (this.tableHeaderMatch.test(line) && this.currentTable.children.length === 1) {
+        let headerRow = this.currentTable.children[0];
+        headerRow.children.forEach((th) => th.element = 'th');
+
+        this.parseTableRow(line)
+          .map((alignment) => alignment.text)
+          .forEach((alignment, idx) => {
+            var element;
+            if (idx + 1 > headerRow.children.length) {
+              element = { element: 'th' };
+              headerRow.children.push(element);
+            } else {
+              element = headerRow.children[idx];
+            }
+
+            if (this.leftTableMatch.test(alignment)) {
+              element.alignment = this.tableAlignments.left;
+            } else if (this.rightTableMatch.test(alignment)) {
+              element.alignment = this.tableAlignments.right;
+            } else if (this.centerTableMatch.test(alignment)) {
+              element.alignment = this.tableAlignments.center;
+            }
+          });
+
+        this.currentTable.numColumns = headerRow.children.length;
+        return
+      }
+
+      let row = { element: 'tr' };
+
+      if (this.identifierMatch.test(line)) {
+        var { line: trimmed, id, classes } = this.splitIdentifiersFromLine(line);
+        row.id = id;
+        row.classes = classes;
+        line = trimmed;
+      }
+
+      row.children = this.parseTableRow(line);
+
+      if (row.children.length > this.currentTable.numColumns) {
+        this.currentTable.numColumns = row.children.length;
+      }
+
+      this.currentTable.children.push(row);
+    } else {
+      let table = { element: 'table' };
+      let row = { element: 'tr' };
+
+      if (this.parentIdentifierMatch.test(line)) {
+        var { line: trimmed, id, classes } = this.splitIdentifiersFromLine(line, this.parentIdentifierMatch);
+        table.id = id;
+        table.classes = classes;
+        line = trimmed;
+      }
+
+      if (this.identifierMatch.test(line)) {
+        var { line: trimmed, id, classes } = this.splitIdentifiersFromLine(line);
+        row.id = id;
+        row.classes = classes;
+        line = trimmed;
+      }
+
+      table.children = [row];
+      row.children = this.parseTableRow(line);
+      table.numColumns = row.children.length;
+      this.inTable = true;
+      this.currentTable = table;
+
+      this.addToElements(table);
+    }
+  }
+
   getOrderedList() {
     return {
       element: 'ol',
@@ -472,6 +581,8 @@ class EvergreenProcessor {
         this.parseList(line);
       } else if (this.blockMatch.test(line.trim())) {
         this.parseBlockquote(line.trim());
+      } else if (this.tableMatch.test(line.trim())) {
+        this.parseTable(line.trim());
       } else if (line.trim() != '') {
         // Else we are in a non-empty text element
         this.resetAllSpecialElements();

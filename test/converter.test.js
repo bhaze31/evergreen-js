@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const EvergreenConverter = require('../src/EvergreenConverter');
+const EvergreenProcessor = require('../src/EvergreenProcessor');
 require('jsdom-global')();
 
 describe('Evergreen Converter', function () {
@@ -111,8 +112,33 @@ describe('Evergreen Converter', function () {
     });
   });
 
+  describe('table converted', function () {
+    it('should be able to convert a basic table', function () {
+      const parentElement = document.createElement('div');
+      const row1 = '|Hello|to the|world|';
+      const row2 = '|-----|:----:|----:|';
+      const row3 = '|we are|getting interesting|data|';
+      const processor = new EvergreenProcessor([row1, row2, row3]);
+      const elements = processor.parse();
+      const converter = new EvergreenConverter(elements);
+      converter.convert(parentElement);
+      assert.equal(parentElement.innerHTML, '<table><tr><th style="text-align: left;">Hello</th><th style="text-align: center;">to the</th><th style="text-align: right;">world</th></tr><tr><td style="text-align: left;">we are</td><td style="text-align: left;">getting interesting</td><td style="text-align: left;">data</td></tr></table>');
+    })
+    it('should be able to convert a table with all elements', function () {
+      const parentElement = document.createElement('div');
+      const row1 = '|Hello|to the|world|{#id .class} {{#parentID .parentClass}}';
+      const row2 = '|-----|:----:|----:|';
+      const row3 = '|we are|getting some interesting [info](links a description) information|data|{#rowID .rowClass}';
+      const processor = new EvergreenProcessor([row1, row2, row3]);
+      const elements = processor.parse();
+      const converter = new EvergreenConverter(elements);
+      converter.convert(parentElement);
+      assert.equal(parentElement.innerHTML, '<table id="parentID" class="parentClass"><tr id="id" class="class"><th style="text-align: left;">Hello</th><th style="text-align: center;">to the</th><th style="text-align: right;">world</th></tr><tr id="rowID" class="rowClass"><td style="text-align: left;">we are</td><td style="text-align: left;">getting some interesting <a href="links" title="a description"></a> information</td><td style="text-align: left;">data</td></tr></table>');
+    });
+  });
+
   describe('fall through elements', function () {
-    ['div', 'blockquote', 'ul', 'ol'].forEach(function (element) {
+    ['div', 'blockquote', 'ul', 'ol', 'table', 'tr'].forEach(function (element) {
       it(`should fall through for ${element}`, function () {
         const parentElement = document.createElement('div');
         const fallthrough = { element, id: 'id', classes: ['c1', 'c2'] };

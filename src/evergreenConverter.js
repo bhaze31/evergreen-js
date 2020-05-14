@@ -8,9 +8,10 @@ class EvergreenConverter {
     return this;
   };
 
-  setTextElements(element, item) {
+  setLinks(element, item) {
     var innerText = item.text;
-    if (item.links) {
+
+    if (item.links && item.links.length > 0) {
       item.links.forEach((link) => {
         var anchor = document.createElement('a');
         var anchorRegex = new RegExp(`<a!>${link.text}<!a>`);
@@ -20,15 +21,17 @@ class EvergreenConverter {
           anchor.title = link.title;
         }
 
-        console.log(anchor);
-        console.log(anchor.outerHTML);
-        console.log(anchor.innerHTML);
         innerText = innerText.replace(anchorRegex, anchor.outerHTML);
       });
     }
 
     element.innerHTML = innerText;
   };
+
+  setTableElements(element, item) {
+    element.style.textAlign = item.alignment;
+    this.setLinks(element, item);
+  }
 
   setImageElements(element, item) {
     element.src = item.src;
@@ -60,9 +63,15 @@ class EvergreenConverter {
       case 'ol':
       case 'hr':
       case 'br':
+      case 'table':
+      case 'tr':
+        break;
+      case 'th':
+      case 'td':
+        this.setTableElements(element, item);
         break;
       default:
-        this.setTextElements(element, item);
+        this.setLinks(element, item);
     }
 
     this.setIdentifiers(element, item.id, item.classes);

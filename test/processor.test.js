@@ -421,6 +421,83 @@ describe('Evergreen Processor', function () {
     });
   });
 
+  describe('table processed', function () {
+    it('should be able to parse a table', function () {
+      const row1 = '|Hello|to the|world|';
+      const row2 = '|-----|------|-----|';
+      const row3 = '|we are|getting|data|';
+      const processor = new EvergreenProcessor([row1, row2, row3]);
+      const elements = processor.parse();
+
+      assert.equal(elements.length, 1);
+
+      const tableElement = elements[0];
+      assert.equal(tableElement.element, 'table');
+      assert.equal(tableElement.children.length, 2);
+
+      const tableHeader = tableElement.children[0];
+
+
+    });
+
+    it('should be able to handle alignments in the table header', function () {
+      const row1 = '|Hello|to the|world|';
+      const row2 = '|:-----|:------:|-----:|';
+      const processor = new EvergreenProcessor([row1, row2]);
+      const elements = processor.parse();
+
+      const tableElement = elements[0];
+      const headerRow = tableElement.children[0];
+
+      ['left', 'center', 'right'].forEach(function (alignment, idx) {
+        assert.equal(headerRow.children[idx].alignment, alignment);
+      });
+
+    });
+
+    it('should be able to handle table and row identifiers', function () {
+      const row1 = '|Hello|Table|{#id .class} {{#parent .carent}}';
+      const row2 = '|Data|Stuff|{#did .dass}';
+      const processor = new EvergreenProcessor([row1, row2]);
+      const elements = processor.parse();
+
+      const tableElement = elements[0];
+
+      assert.equal(tableElement.id, 'parent');
+      assert.equal(tableElement.classes.length, 1);
+      assert.equal(tableElement.classes[0], 'carent');
+      assert.equal(tableElement.children.length, 2);
+
+      const firstRow = tableElement.children[0];
+
+      assert.equal(firstRow.id, 'id');
+      assert.equal(firstRow.classes.length, 1);
+      assert.equal(firstRow.classes[0], 'class');
+
+      const secondRow = tableElement.children[1];
+
+      assert.equal(secondRow.id, 'did');
+      assert.equal(secondRow.classes.length, 1);
+      assert.equal(secondRow.classes[0], 'dass');
+    });
+
+    it('should be able to handle mismatched row count', function () {
+      const row1 = '|Hello|to the|';
+      const row2 = '|---|----|---|';
+      const row3 = '|a|data row|for|all|';
+      const processor = new EvergreenProcessor([row1, row2]);
+      let elements = processor.parse();
+
+      let tableElement = elements[0];
+
+      assert.equal(tableElement.numColumns, 3);
+      processor.updateLines([row1, row2, row3]);
+      elements = processor.parse();
+      tableElement = elements[0];
+      assert.equal(tableElement.numColumns, 4)
+    });
+  });
+
   describe('identifier processed', function () {
     it('should return a list of classes and ids', function () {
       const processor = new EvergreenProcessor();
