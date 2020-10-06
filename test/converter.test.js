@@ -123,7 +123,8 @@ describe('Evergreen Converter', function () {
       const converter = new EvergreenConverter(elements);
       converter.convert(parentElement);
       assert.equal(parentElement.innerHTML, '<table><tr><th style="text-align: left;">Hello</th><th style="text-align: center;">to the</th><th style="text-align: right;">world</th></tr><tr><td style="text-align: left;">we are</td><td style="text-align: left;">getting interesting</td><td style="text-align: left;">data</td></tr></table>');
-    })
+    });
+
     it('should be able to convert a table with all elements', function () {
       const parentElement = document.createElement('div');
       const row1 = '|Hello|to the|world|{#id .class} {{#parentID .parentClass}}';
@@ -157,7 +158,40 @@ describe('Evergreen Converter', function () {
 
         converter.convert(parentElement);
         assert.equal(parentElement.innerHTML, `<${element}>`);
-      })
-    })
-  })
+      });
+    });
+  });
+
+  describe('modifiers converted', function() {
+    it('can convert bold elements', function () {
+      const line = 'A <b!>bold<!b> statement made <b!>strongly<!b>';
+      const converter = new EvergreenConverter([]);
+      const result = converter.setModifiers(line);
+      assert.equal('A <b></b> statement made <b></b>', result);
+    });
+
+    it('can convert italic elements', function () {
+      const line = 'A <i!>emphasized<!i> statement';
+      const converter = new EvergreenConverter([]);
+      const result = converter.setModifiers(line);
+      assert.equal('A <i></i> statement', result);
+    });
+
+    it('can convert both italic and bold elements', function () {
+      const line = 'A <b!>big<!b> bold <b!><i!>statement<!i><!b> made with <i!>gusto<!i> clearly';
+      const converter = new EvergreenConverter([]);
+      const result = converter.setModifiers(line);
+      assert.equal('A <b></b> bold <b><i></i></b> made with <i></i> clearly', result);
+    });
+
+    it('can convert modifiers in text elements', function () {
+      const parentElement = document.createElement('div');
+      const line = 'A <b!>big<!b> bold <b!><i!>statement<!i><!b> made with <i!>gusto<!i> clearly';
+      const element = { element: 'p', text: line }
+      const converter = new EvergreenConverter([element]);
+      converter.convert(parentElement);
+      console.log(parentElement.innerHTML);
+      assert.equal(parentElement.innerHTML, '<p>A <b></b> bold <b><i></i></b> made with <i></i> clearly</p>');
+    });
+  });
 });
