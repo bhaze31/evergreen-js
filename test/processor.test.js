@@ -557,4 +557,42 @@ describe('Evergreen Processor', function () {
       assert.equal(elements.length, 2);
     })
   });
+
+  describe('modifiers processed', function () {
+    it('should be able to parse bold elements', function () {
+      const line = 'Hello **person** welcome';
+      const processor = new EvergreenProcessor();
+      const result = processor.parseBoldMatch(line);
+      assert.equal('Hello <b!>person<!b> welcome', result);
+    });
+
+    it('should be able to parse italic elements', function () {
+      const line = 'Hello *people* welcome';
+      const processor = new EvergreenProcessor();
+      const result = processor.parseItalicMatch(line);
+      assert.equal('Hello <i!>people<!i> welcome', result);
+    });
+
+    it('should be able to parse bold and italic elements together', function () {
+      const line = 'Hello ***everyone*** welcome';
+      const processor = new EvergreenProcessor();
+      const result = processor.parseBoldItalicMatch(line);
+      assert.equal('Hello <b!><i!>everyone<!i><!b> welcome', result);
+    });
+
+    it('should be able to parse multiple bold and italic elements', function () {
+      const line = 'this *interesting* ***wonderful*** yet **bold** sentence';
+      const processor = new EvergreenProcessor();
+      const result = processor.parseModifiers(line);
+      assert.equal('this <i!>interesting<!i> <b!><i!>wonderful<!i><!b> yet <b!>bold<!b> sentence', result);
+    });
+
+    it('should parse modifiers in paragraphs', function () {
+      const line = 'Hello **users** welcome. We ***make*** some *things* I guess';
+      const processor = new EvergreenProcessor([line]);
+      const elements = processor.parse();
+      assert.equal(elements.length, 1);
+      assert.equal(elements[0].text, 'Hello <b!>users<!b> welcome. We <b!><i!>make<!i><!b> some <i!>things<!i> I guess');
+    })
+  });
 });

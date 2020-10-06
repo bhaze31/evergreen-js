@@ -67,6 +67,10 @@ class EvergreenProcessor {
     // Identifier elements
     this.identifierMatch = new RegExp(/\{[\w-_\s\.#]+\}$/);
     this.parentIdentifierMatch = new RegExp(/\{\{[\w-_\s\.#]+\}\}$/);
+
+    this.boldMatch = new RegExp(/\*{2}[^\*]+\*{2}/);
+    this.italicMatch = new RegExp(/\*{1}[^\*]+\*{1}/);
+    this.boldItalicMatch = new RegExp(/\*{3}[^\*]+\*{3}/);
   };
 
   resetAllSpecialElements() {
@@ -196,16 +200,63 @@ class EvergreenProcessor {
     };
   };
 
+  parseItalicMatch(line) {
+    let match = this.italicMatch.exec(line);
+    let italicReplace = new RegExp(/\*{1}/, "g");
+    let replaced = `<i!>${match[0].replace(italicReplace, '')}<!i>`;
+    line = line.replace(match[0], replaced);
+
+    return line
+  };
+
+  parseBoldMatch(line) {
+    let match = this.boldMatch.exec(line);
+    let boldReplace = new RegExp(/\*{2}/, "g");
+    let replaced = `<b!>${match[0].replace(boldReplace, '')}<!b>`;
+    line = line.replace(match[0], replaced);
+
+    return line
+  };
+
+  parseBoldItalicMatch(line) {
+    let match = this.boldItalicMatch.exec(line);
+    let replaceAll = new RegExp(/\*{1}/, "g");
+    let replaced = `<b!><i!>${match[0].replace(replaceAll, '')}<!i><!b>`;
+    line = line.replace(match[0], replaced);
+
+    return line
+  };
+
+  parseModifiers(line) {
+    while (this.italicMatch.test(line)) {
+      if (this.boldItalicMatch.test(line)) {
+        line = this.parseBoldItalicMatch(line);
+      } else if (this.boldMatch.test(line)) {
+        line = this.parseBoldMatch(line);
+      } else {
+        line = this.parseItalicMatch(line);
+      }
+    }
+
+    return line;
+  };
+
   parseTextElement(line) {
     var trimmed = line.trim();
 
     if (trimmed.startsWith('#')) {
-      return this.parseHeader(trimmed);
+      line = this.parseHeader(trimmed);
     } else if (this.imageMatch.exec(trimmed)) {
-      return this.parseImage(trimmed);
+      line = this.parseImage(trimmed);
     } else {
-      return this.parseParagraph(trimmed);
+      line = this.parseParagraph(trimmed);
     }
+
+    if (this.italicMatch.test(line.text)) {
+      line.text = this.parseModifiers(line.text);
+    }
+
+    return line;
   };
 
   parseListItem(line) {
