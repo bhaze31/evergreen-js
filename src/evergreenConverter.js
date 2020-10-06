@@ -1,6 +1,10 @@
 class EvergreenConverter {
   constructor(data) {
     this.data = data;
+
+    this.boldMatch = new RegExp(/<b!>[^<]+<!b>/);
+    this.italicMatch = new RegExp(/<i!>[^<]+<!i>/);
+    this.boldItalicMatch = new RegExp(/<b!><i!>[^<]+<!i><!b>/);
   };
 
   updateData(data) {
@@ -8,8 +12,42 @@ class EvergreenConverter {
     return this;
   };
 
+  setModifiers(text) {
+    var match;
+    while (match = this.boldItalicMatch.exec(text)) {
+      let italic = document.createElement('i');
+      let bold = document.createElement('b');
+      var replacementText = match[0].replace('<b!><i!>', '').replace('<!i><!b>', '');
+      italic.innerText = text.replace(match[0], replacementText);
+
+      bold.appendChild(italic);
+      text = text.replace(match[0], bold.outerHTML);
+    }
+
+    while (match = this.italicMatch.exec(text)) {
+      var italic = document.createElement('i');
+      var replacementText = match[0].replace('<i!>', '').replace('<!i>', '');
+      italic.innerText = text.replace(match[0], replacementText);
+
+      text = text.replace(match[0], italic.outerHTML);
+    }
+
+    while (match = this.boldMatch.exec(text)) {
+      var bold = document.createElement('b');
+      var replacementText = match[0].replace('<b!>', '').replace('<!b>', '');
+      bold.innerText = text.replace(match[0], replacementText);
+      text = text.replace(match[0], bold.outerHTML);
+    }
+
+    return text;
+  };
+
   setLinks(element, item) {
     var innerText = item.text;
+
+    if (this.boldMatch.test(innerText) || this.italicMatch.test(innerText)) {
+      innerText = this.setModifiers(innerText);
+    }
 
     if (item.links && item.links.length > 0) {
       item.links.forEach((link) => {
