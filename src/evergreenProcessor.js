@@ -1,3 +1,5 @@
+const { v4: uuid } = require('uuid');
+
 class EvergreenProcessor {
   constructor(lines) {
     this.lines = lines;
@@ -40,12 +42,10 @@ class EvergreenProcessor {
     this.linkMatch = new RegExp(/[^\!]\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
 
     // Image information
-    this.imageMatch = new RegExp(/^!\[.+\]\(.+\)$/);
-    this.inlineImageMatch = new RegExp(/!\[.+]\(.+\)/);
+    this.imageMatch = new RegExp(/!\[.+\]\(.+\)/);
 
     // Link Image information
-    this.linkImageMatch = new RegExp(/^\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)$/);
-    this.inlineLinkImageMatch = new RegExp(/\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)/);
+    this.linkImageMatch = new RegExp(/\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)/);
 
     // Div elements
     this.inDiv = false;
@@ -100,6 +100,65 @@ class EvergreenProcessor {
     return this;
   };
 
+  parseLink(text, toTest = this.linkMatch, forwardReplace = '[', element = 'a', spaces = ' ') {
+    var match = toTest.exec(text)
+
+    if (!match) { return { text } }
+
+    var alt = this.altMatch.exec(match[0])[0].replace(forwardReplace, '').replace(/]$/, '');
+    var linkInfo = this.descMatch.exec(match[0])[0].replace('(', '').replace(/\)$/, '').split(' ');
+    var href = linkInfo[0];
+    var title = linkInfo.slice(1).join(' ');
+    var identifier = uuid();
+    var replaced = text.replace(match, `${spaces}${identifier}`);
+
+    return {
+      text: replaced,
+      child: {
+        alt,
+        href,
+        title,
+        identifier,
+        element,
+        children: []
+      }
+    };
+  };
+
+  parseImage(line) {
+    return this.parseLink(line, this.imageMatch, '![', 'img', '')
+  }
+
+  parseChildText(element, text) {
+    var currentText = text;
+
+    while (this.linkMatch.test(currentText)) {
+      var { text: newText, child } = this.parseLink(currentText)
+      currentText = newText;
+      element.children.push(child);
+    }
+
+    return currentText;
+  };
+
+  parseParagraph(line) {
+    var result = {
+      element: 'p',
+      children: []
+    };
+
+    result.text = this.parseChildText(result, line)
+
+    if (this.identifierMatch.test(result.text)) {
+      var { line, id, classes } = this.splitIdentifiersFromLine(result.text);
+      result.id = id;
+      result.classes = classes;
+      result.text = line
+    }
+
+    return result;
+  };
+
   splitIdentifiersFromLine(line, matching) {
     if (matching === undefined) {
       matching = this.identifierMatch;
@@ -124,48 +183,6 @@ class EvergreenProcessor {
     return { line: trimmed, id: id, classes: classes };
   }
 
-  parseImageFromText(line) {
-    let match = this.inlineImageMatch.exec(line);
-    let altInfo = this.altMatch.exec(match[0])[0].replace('![', '').replace(']', '');
-    let descInfo = this.descMatch.exec(match[0])[0].replace('(', '').replace(')', '').split(' ');
-    let imgSrc = descInfo[0];
-    let titleInfo = descInfo.slice(1).join(' ');
-    let newLine = line.replace(match[0], `<img!>${altInfo}<!img>`)
-    return {
-      element: 'img',
-      src: imgSrc,
-      alt: altInfo,
-      title: titleInfo,
-      text: newLine
-    };
-  };
-
-  parseLinks(line) {
-    // Necessary to loop through with global flag
-    var linkMatchLoop = new RegExp(/\[[\w\s"']+\]\([\w\s\/:\."']+\)/g)
-    var match;
-    var links = [];
-    while (match = this.linkMatch.exec(line)) {
-      var link = match[0];
-      var altInfo = this.altMatch.exec(link)[0].replace(/(\[|\]|!\[)/g, '');
-      var descInfo = this.descMatch.exec(link)[0].replace(/(\(|\))/g, '').split(' ');
-      var href = descInfo[0];
-      var title = descInfo.slice(1).join(' ');
-      links.push({
-        href: href,
-        text: altInfo,
-        title: title
-      });
-      var anchor = ` <a!>${altInfo}<!a>`;
-      line = line.replace(this.linkMatch, anchor);
-    }
-
-    return {
-      text: line,
-      links: links
-    };
-  };
-
   parseHeader(line) {
     var headerRegex = new RegExp('^#+');
     var headerLength = headerRegex.exec(line)[0].length;
@@ -176,7 +193,7 @@ class EvergreenProcessor {
 
     var result = {
       element: `h${headerLength}`,
-      ...this.parseLinks(headerText),
+      ...this.parseLink(headerText),
     }
 
     if (this.identifierMatch.test(result.text)) {
@@ -187,42 +204,6 @@ class EvergreenProcessor {
     }
 
     return result;
-  };
-
-  parseParagraph(line) {
-    var result = {
-      element: 'p',
-      ...this.parseLinks(line),
-    };
-
-    if (this.inlineImageMatch.test(result.text)) {
-      result = {
-        ...result,
-        ...this.parseImageFromText(result.text)
-      };
-    }
-
-    if (this.identifierMatch.test(result.text)) {
-      var { line, id, classes } = this.splitIdentifiersFromLine(result.text);
-      result.id = id;
-      result.classes = classes;
-      result.text = line
-    }
-
-    return result;
-  };
-
-  parseImage(line) {
-    var altInfo = this.altMatch.exec(line)[0].replace('![', '').replace(']', '');
-    var descInfo = this.descMatch.exec(line)[0].replace('(', '').replace(')', '').split(' ');
-    var imgSrc = descInfo[0];
-    var titleInfo = descInfo.slice(1).join(' ');
-    return {
-      element: 'img',
-      src: imgSrc,
-      alt: altInfo,
-      title: titleInfo
-    };
   };
 
   parseItalicMatch(line) {
@@ -268,20 +249,29 @@ class EvergreenProcessor {
 
   parseTextElement(line) {
     var trimmed = line.trim();
-
+    var element;
     if (trimmed.startsWith('#')) {
-      line = this.parseHeader(trimmed);
-    } else if (this.imageMatch.exec(trimmed)) {
-      line = this.parseImage(trimmed);
+      element = this.parseHeader(trimmed);
+    } else if (this.imageMatch.test(line)) {
+      const { text, child: link } = this.parseImage(line);
+      if (text === link.identifier) {
+        element = link;
+      } else {
+        element = {
+          element: 'p',
+          text,
+          children: [link],
+        };
+      }
     } else {
-      line = this.parseParagraph(trimmed);
+      element = this.parseParagraph(trimmed);
     }
 
-    if (this.italicMatch.test(line.text)) {
-      line.text = this.parseModifiers(line.text);
+    if (this.italicMatch.test(element.text)) {
+      element.text = this.parseModifiers(element.text);
     }
 
-    return line;
+    return element;
   };
 
   parseListItem(line) {
@@ -290,8 +280,10 @@ class EvergreenProcessor {
 
     var result = {
       element: 'li',
-      ...this.parseLinks(text),
+      children: []
     };
+
+    result.text = this.parseChildText(result, text);
 
     if (this.identifierMatch.test(result.text)) {
       var { line, id, classes } = this.splitIdentifiersFromLine(result.text);
@@ -478,7 +470,7 @@ class EvergreenProcessor {
       let element = {
         element: 'td',
         alignment: this.tableAlignments.left,
-        ...this.parseLinks(item)
+        ...this.parseLink(item)
       };
 
       tableItems.push(element);
