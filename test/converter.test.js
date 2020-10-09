@@ -132,9 +132,10 @@ describe('Evergreen Converter', function () {
       const row3 = '|we are|getting some interesting [info](links a description) information|data|{#rowID .rowClass}';
       const processor = new EvergreenProcessor([row1, row2, row3]);
       const elements = processor.parse();
+      const id = elements[0].children[1].children[1].child.identifier
       const converter = new EvergreenConverter(elements);
       converter.convert(parentElement);
-      assert.equal(parentElement.innerHTML, '<table id="parentID" class="parentClass"><tr id="id" class="class"><th style="text-align: left;">Hello</th><th style="text-align: center;">to the</th><th style="text-align: right;">world</th></tr><tr id="rowID" class="rowClass"><td style="text-align: left;">we are</td><td style="text-align: left;">getting some interesting <a href="links" title="a description"></a> information</td><td style="text-align: left;">data</td></tr></table>');
+      assert.equal(parentElement.innerHTML, `<table id="parentID" class="parentClass"><tr id="id" class="class"><th style="text-align: left;">Hello</th><th style="text-align: center;">to the</th><th style="text-align: right;">world</th></tr><tr id="rowID" class="rowClass"><td style="text-align: left;">we are</td><td style="text-align: left;">getting some interesting ${id} information</td><td style="text-align: left;">data</td></tr></table>`);
     });
   });
 
@@ -190,7 +191,6 @@ describe('Evergreen Converter', function () {
       const element = { element: 'p', text: line }
       const converter = new EvergreenConverter([element]);
       converter.convert(parentElement);
-      console.log(parentElement.innerHTML);
       assert.equal(parentElement.innerHTML, '<p>A <b></b> bold <b><i></i></b> made with <i></i> clearly</p>');
     });
   });
