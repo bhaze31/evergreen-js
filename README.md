@@ -25,6 +25,7 @@ An expansion of regular Markdown. Evergreen adds the ability to add classes, ids
 - ID Linking
 - Definition Lists
 - Task Lists
+- Table Row/Col Span
 - Escaping Characters
 
 ### Usage

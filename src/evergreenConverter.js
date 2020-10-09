@@ -18,7 +18,7 @@ class EvergreenConverter {
       let italic = document.createElement('i');
       let bold = document.createElement('b');
       var replacementText = match[0].replace('<b!><i!>', '').replace('<!i><!b>', '');
-      italic.innerText = text.replace(match[0], replacementText);
+      italic.innerText = replacementText;
 
       bold.appendChild(italic);
       text = text.replace(match[0], bold.outerHTML);
@@ -27,7 +27,7 @@ class EvergreenConverter {
     while (match = this.italicMatch.exec(text)) {
       var italic = document.createElement('i');
       var replacementText = match[0].replace('<i!>', '').replace('<!i>', '');
-      italic.innerText = text.replace(match[0], replacementText);
+      italic.innerText = replacementText;
 
       text = text.replace(match[0], italic.outerHTML);
     }
@@ -35,7 +35,8 @@ class EvergreenConverter {
     while (match = this.boldMatch.exec(text)) {
       var bold = document.createElement('b');
       var replacementText = match[0].replace('<b!>', '').replace('<!b>', '');
-      bold.innerText = text.replace(match[0], replacementText);
+      bold.innerText = replacementText;
+
       text = text.replace(match[0], bold.outerHTML);
     }
 
