@@ -391,6 +391,17 @@ describe('Evergreen Processor', function () {
       const imageLinkElement = elements[0];
       // TODO: Allow image links
     });
+
+    it('should be able to process an inline image', function () {
+      const imageText = 'A wild ![coyote](wild was a move) and then some';
+      const processor = new EvergreenProcessor([imageText]);
+      const elements = processor.parse();
+
+      const imageElement = elements[0];
+
+      assert.equal(imageElement.element, 'img');
+      assert.equal(imageElement.text, 'A wild <img!>coyote<!img> and then some');
+    });
   });
 
   describe('horizontal rule processed', function () {

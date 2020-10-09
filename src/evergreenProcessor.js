@@ -37,13 +37,15 @@ class EvergreenProcessor {
     this.descMatch = new RegExp(/\(.+\)/);
 
     // Link information
-    this.linkMatch = new RegExp(/\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
+    this.linkMatch = new RegExp(/[^\!]\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
 
     // Image information
     this.imageMatch = new RegExp(/^!\[.+\]\(.+\)$/);
+    this.inlineImageMatch = new RegExp(/!\[.+]\(.+\)/);
 
     // Link Image information
-    this.linkImageMatch = new RegExp(/^\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)$/)
+    this.linkImageMatch = new RegExp(/^\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)$/);
+    this.inlineLinkImageMatch = new RegExp(/\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)/);
 
     // Div elements
     this.inDiv = false;
@@ -122,6 +124,22 @@ class EvergreenProcessor {
     return { line: trimmed, id: id, classes: classes };
   }
 
+  parseImageFromText(line) {
+    let match = this.inlineImageMatch.exec(line);
+    let altInfo = this.altMatch.exec(match[0])[0].replace('![', '').replace(']', '');
+    let descInfo = this.descMatch.exec(match[0])[0].replace('(', '').replace(')', '').split(' ');
+    let imgSrc = descInfo[0];
+    let titleInfo = descInfo.slice(1).join(' ');
+    let newLine = line.replace(match[0], `<img!>${altInfo}<!img>`)
+    return {
+      element: 'img',
+      src: imgSrc,
+      alt: altInfo,
+      title: titleInfo,
+      text: newLine
+    };
+  };
+
   parseLinks(line) {
     // Necessary to loop through with global flag
     var linkMatchLoop = new RegExp(/\[[\w\s"']+\]\([\w\s\/:\."']+\)/g)
@@ -138,7 +156,7 @@ class EvergreenProcessor {
         text: altInfo,
         title: title
       });
-      var anchor = `<a!>${altInfo}<!a>`;
+      var anchor = ` <a!>${altInfo}<!a>`;
       line = line.replace(this.linkMatch, anchor);
     }
 
@@ -176,6 +194,13 @@ class EvergreenProcessor {
       element: 'p',
       ...this.parseLinks(line),
     };
+
+    if (this.inlineImageMatch.test(result.text)) {
+      result = {
+        ...result,
+        ...this.parseImageFromText(result.text)
+      };
+    }
 
     if (this.identifierMatch.test(result.text)) {
       var { line, id, classes } = this.splitIdentifiersFromLine(result.text);
