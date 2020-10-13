@@ -164,34 +164,15 @@ describe('Evergreen Converter', function () {
   });
 
   describe('modifiers converted', function() {
-    it('can convert bold elements', function () {
-      const line = 'A <b!>bold<!b> statement made <b!>strongly<!b>';
-      const converter = new EvergreenConverter([]);
-      const result = converter.setModifiers(line);
-      assert.equal('A <b></b> statement made <b></b>', result);
-    });
-
-    it('can convert italic elements', function () {
-      const line = 'A <i!>emphasized<!i> statement';
-      const converter = new EvergreenConverter([]);
-      const result = converter.setModifiers(line);
-      assert.equal('A <i></i> statement', result);
-    });
-
-    it('can convert both italic and bold elements', function () {
-      const line = 'A <b!>big<!b> bold <b!><i!>statement<!i><!b> made with <i!>gusto<!i> clearly';
-      const converter = new EvergreenConverter([]);
-      const result = converter.setModifiers(line);
-      assert.equal('A <b></b> bold <b><i></i></b> made with <i></i> clearly', result);
-    });
-
     it('can convert modifiers in text elements', function () {
+      const line = 'Hello **users** welcome. We ***make*** some *things* I guess';
+      const processor = new EvergreenProcessor([line]);
+      const elements = processor.parse();
+
       const parentElement = document.createElement('div');
-      const line = 'A <b!>big<!b> bold <b!><i!>statement<!i><!b> made with <i!>gusto<!i> clearly';
-      const element = { element: 'p', text: line }
-      const converter = new EvergreenConverter([element]);
+      const converter = new EvergreenConverter(elements);
       converter.convert(parentElement);
-      assert.equal(parentElement.innerHTML, '<p>A <b></b> bold <b><i></i></b> made with <i></i> clearly</p>');
+      assert.equal(parentElement.innerHTML, "<p>Hello <b>users</b> welcome. We <b><i>make</i></b> some <i>things</i> I guess</p>");
     });
   });
 });
