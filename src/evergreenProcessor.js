@@ -206,45 +206,73 @@ class EvergreenProcessor {
     return result;
   };
 
-  parseItalicMatch(line) {
+  parseItalicMatch(element) {
+    let line = element.text;
     let match = this.italicMatch.exec(line);
     let italicReplace = new RegExp(/\*{1}/, "g");
-    let replaced = `<i!>${match[0].replace(italicReplace, '')}<!i>`;
-    line = line.replace(match[0], replaced);
+    let identifier = uuid();
+    element.text = line.replace(match[0], identifier);
 
-    return line
-  };
-
-  parseBoldMatch(line) {
-    let match = this.boldMatch.exec(line);
-    let boldReplace = new RegExp(/\*{2}/, "g");
-    let replaced = `<b!>${match[0].replace(boldReplace, '')}<!b>`;
-    line = line.replace(match[0], replaced);
-
-    return line
-  };
-
-  parseBoldItalicMatch(line) {
-    let match = this.boldItalicMatch.exec(line);
-    let replaceAll = new RegExp(/\*{1}/, "g");
-    let replaced = `<b!><i!>${match[0].replace(replaceAll, '')}<!i><!b>`;
-    line = line.replace(match[0], replaced);
-
-    return line
-  };
-
-  parseModifiers(line) {
-    while (this.italicMatch.test(line)) {
-      if (this.boldItalicMatch.test(line)) {
-        line = this.parseBoldItalicMatch(line);
-      } else if (this.boldMatch.test(line)) {
-        line = this.parseBoldMatch(line);
-      } else {
-        line = this.parseItalicMatch(line);
-      }
+    let italic = {
+      element: 'i',
+      identifier,
+      text: match[0].replace(italicReplace, ''),
+      children: []
     }
 
-    return line;
+    element.children.push(italic)
+  };
+
+  parseBoldMatch(element) {
+    let line = element.text;
+    let match = this.boldMatch.exec(line);
+    let boldReplace = new RegExp(/\*{2}/, "g");
+    let identifier = uuid();
+    element.text = line.replace(match[0], identifier);
+
+    let bold = {
+      element: 'b',
+      identifier,
+      text: match[0].replace(boldReplace, ''),
+      children: []
+    }
+
+    element.children.push(bold);
+  };
+
+  parseBoldItalicMatch(element) {
+    let line = element.text;
+    let match = this.boldItalicMatch.exec(line);
+    let replaceAll = new RegExp(/\*{1}/, "g");
+
+    let identifier = uuid();
+    let italic = {
+      element: 'i',
+      text: match[0].replace(replaceAll, ''),
+      children: []
+    };
+
+    let bold = {
+      element: 'b',
+      identifier,
+      text: '',
+      children: [italic],
+    };
+
+    element.text = line.replace(match[0], identifier);
+    element.children.push(bold);
+  };
+
+  parseModifiers(element) {
+    while (this.italicMatch.test(element.text)) {
+      if (this.boldItalicMatch.test(element.text)) {
+        this.parseBoldItalicMatch(element);
+      } else if (this.boldMatch.test(element.text)) {
+        this.parseBoldMatch(element);
+      } else {
+        this.parseItalicMatch(element);
+      }
+    }
   };
 
   parseTextElement(line) {
@@ -268,7 +296,7 @@ class EvergreenProcessor {
     }
 
     if (this.italicMatch.test(element.text)) {
-      element.text = this.parseModifiers(element.text);
+      this.parseModifiers(element);
     }
 
     return element;
