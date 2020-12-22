@@ -1,7 +1,7 @@
 {
   "name": "@bhaze31/evergreenjs",
-  "author": "Brian Hasenstab <brian.hasenstab31@gmail.com>",
-  "version": "0.1.0",
+  "author": "Brian Hasenstab",
+  "version": "0.1.1",
   "description": "a markdown language super set that includes classes and visual layout elements",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,6 @@
     "post",
     "evergreen"
   ],
-  "author": "Brian Hasenstab",
   "license": "ISC",
   "devDependencies": {
     "chai": "^4.2.0",
