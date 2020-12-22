@@ -1,5 +1,6 @@
 {
   "name": "evergreenjs",
+  "author": "Brian Hasenstab <brian.hasenstab31@gmail.com>",
   "version": "0.1.0",
   "description": "a markdown language super set that includes classes and visual layout elements",
   "main": "index.js",

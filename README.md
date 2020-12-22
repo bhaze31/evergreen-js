@@ -1,6 +1,6 @@
 # Evergreen Markdown
 
-An expansion of regular Markdown. Evergreen adds the ability to add classes, ids, and other HTML elements to your markdown, allowing better control of how your pages look and feel.
+An expansion of regular Markdown. Evergreen adds the ability to add classes, ids, and other HTML elements to your markdown, allowing better control of how your pages look and feel. This package is an experiment to create a Markdown processor and to learn how to publish an npm module. It is free to use.
 
 ## Current Support
 
@@ -16,12 +16,12 @@ An expansion of regular Markdown. Evergreen adds the ability to add classes, ids
 - Divs
 - IDs
 - Classes
+- Fenced Code Blocks
 
 ## To Be Implemented
 
 - Inline Images
 - Wiki-style Reference Links
-- Fenced Code Blocks
 - ID Linking
 - Definition Lists
 - Task Lists
