@@ -175,4 +175,23 @@ describe('Evergreen Converter', function () {
       assert.equal(parentElement.innerHTML, "<p>Hello <b>users</b> welcome. We <b><i>make</i></b> some <i>things</i> I guess</p>");
     });
   });
+
+  describe('code converted', function () {
+    it('can convert code into text elements', function () {
+      const lines = [
+        '```',
+        'function hello() {',
+        '  return "Hello World";',
+        '}',
+        '```'
+      ];
+      const processor = new EvergreenProcessor(lines);
+      const elements = processor.parse();
+
+      const parentElement = document.createElement('div');
+      const converter = new EvergreenConverter(elements);
+      converter.convert(parentElement);
+      assert.equal(parentElement.innerHTML, '<pre><code>function hello() {\n  return "Hello World";\n}</code></pre>');
+    });
+  });
 });

@@ -9,8 +9,8 @@ class EvergreenProcessor {
     this.O_LIST = 'O_LIST';
     this.UO_LIST = 'UO_LIST';
     this.inList = false;
-    this.currentList;
-    this.currentListType;
+    this.currentList = null;
+    this.currentListType = null;
     this.currentListIndentLength = 0;
     this.currentSubList = 0;
 
@@ -20,7 +20,7 @@ class EvergreenProcessor {
 
     // Blockquote elements
     this.inBlockquote = false;
-    this.currentBlockquote;
+    this.currentBlockquote = null;
     this.currentBlockquoteIndentLength = 0;
     this.currentSubQuote = 0;
     this.shouldAppendParagraph = false;
@@ -49,7 +49,7 @@ class EvergreenProcessor {
 
     // Div elements
     this.inDiv = false;
-    this.currentDiv;
+    this.currentDiv = null;
     this.divMatch = new RegExp(/^<<-[A-Za-z0-9]{3}/);
 
     // Table elements
@@ -73,6 +73,10 @@ class EvergreenProcessor {
     this.boldMatch = new RegExp(/\*{2}[^\*]+\*{2}/);
     this.italicMatch = new RegExp(/\*{1}[^\*]+\*{1}/);
     this.boldItalicMatch = new RegExp(/\*{3}[^\*]+\*{3}/);
+
+    this.codeMatch = new RegExp(/^```/);
+    this.inCode = false;
+    this.codeElement = null;
   };
 
   resetAllSpecialElements() {
@@ -93,6 +97,9 @@ class EvergreenProcessor {
     // Table elements
     this.inTable = false;
     this.currentTable = null;
+
+    // Code elements
+    this.inCode = false;
   };
 
   updateLines(lines) {
@@ -632,6 +639,14 @@ class EvergreenProcessor {
     });
   };
 
+  addToCodeBlock(line) {
+      if (this.codeElement.text == "") {
+        this.codeElement.text = line
+      } else {
+        this.codeElement.text += `\n${line}`
+      }
+    }
+
   addToElements(element) {
     if (this.inDiv) {
       // We currently have a div, check to see if it is being closed
@@ -679,11 +694,37 @@ class EvergreenProcessor {
         this.parseBlockquote(line.trim());
       } else if (this.tableMatch.test(line.trim())) {
         this.parseTable(line.trim());
-      } else if (line.trim() != '') {
-        // Else we are in a non-empty text element
-        this.resetAllSpecialElements();
+      } else if (this.codeMatch.test(line.trim())) {
+        if (this.inCode) {
+          this.inCode = false;
+          this.codeElement = null;
+        } else {
+          this.inCode = true;
+          // Parse language, if applicable
+          // Pre element necessary for highlight JS
+          this.codeElement = {
+            element: 'code',
+            children: [],
+            text: ''
+          };
 
-        this.addToElements(this.parseTextElement(line));
+          var preElement = {
+            element: 'pre',
+            children: [this.codeElement],
+            text: ''
+          };
+
+          this.addToElements(preElement);
+        }
+      } else if (line.trim() != '') {
+        // Else we are in a non-empty text element.
+        if (this.inCode) {
+          // If we happen to be in a code block, append the data there
+          this.addToCodeBlock(line);
+        } else {
+          this.resetAllSpecialElements();
+          this.addToElements(this.parseTextElement(line));
+        }
       } else {
         this.resetAllSpecialElements();
       }

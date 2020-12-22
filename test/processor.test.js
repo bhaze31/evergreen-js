@@ -31,17 +31,17 @@ describe('Evergreen Processor', function () {
   });
 
   describe('paragraph processed', function() {
-    // it('should parse text as paragraph', function () {
-    //   const paragraph = 'Hello, World! {#id .c1}';
-    //   const processor = new EvergreenProcessor([paragraph]);
-    //   const elements = processor.parse();
-    //   const parsedParagraph = elements[0];
-    //   assert.equal(parsedParagraph.element, 'p');
-    //   assert.equal(parsedParagraph.text, 'Hello, World!');
-    //   assert.equal(parsedParagraph.id, 'id');
-    //   assert.equal(parsedParagraph.classes.length, 1);
-    //   assert.equal(parsedParagraph.classes[0], 'c1');
-    // });
+    it('should parse text as paragraph', function () {
+      const paragraph = 'Hello, World! {#id .c1}';
+      const processor = new EvergreenProcessor([paragraph]);
+      const elements = processor.parse();
+      const parsedParagraph = elements[0];
+      assert.equal(parsedParagraph.element, 'p');
+      assert.equal(parsedParagraph.text, 'Hello, World!');
+      assert.equal(parsedParagraph.id, 'id');
+      assert.equal(parsedParagraph.classes.length, 1);
+      assert.equal(parsedParagraph.classes[0], 'c1');
+    });
 
     it('should be able to parse links inside paragraph', function () {
       const paragraph = 'A paragraph [that](title two links) has at least [two](reffin) links. {#id .c1 .c2 .c3}';
@@ -595,6 +595,27 @@ describe('Evergreen Processor', function () {
       assert.equal(both.children[0].element, 'i');
       assert.equal(italic.element, 'i');
       assert.equal(p.text, `Hello ${bold.identifier} welcome. We ${both.identifier} some ${italic.identifier} I guess`);
+    })
+  });
+
+  describe('code processed', function () {
+    it('should be able to handle code elements', function () {
+      const lines = [
+        '```',
+        'function hello() {',
+        '  return "Hello World";',
+        '}',
+        '```'
+      ];
+      const processor = new EvergreenProcessor(lines);
+      const elements = processor.parse();
+      assert.equal(elements.length, 1);
+      const pre = elements[0];
+      assert.equal(pre.element, 'pre');
+      assert.equal(pre.children.length, 1);
+      const code = pre.children[0];
+      assert.equal(code.element, 'code');
+      assert.equal(code.text, 'function hello() {\n  return "Hello World";\n}');
     })
   });
 });
