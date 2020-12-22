@@ -1,4 +1,4 @@
 'use strict';
 
-exports.EvergreenParser = require('./evergreenParser');
+exports.EvergreenProcessor = require('./evergreenProcessor');
 exports.EvergreenConverter = require('./evergreenConverter');
