@@ -15,7 +15,7 @@ class EvergreenConverter {
       item.links.forEach((link) => {
         var anchor = document.createElement('a');
         var anchorRegex = new RegExp(`<a!>${link.text}<!a>`);
-        anchor.href = link.href;
+        anchor.href = link.dest;
         anchor.innerText = link.text;
         if (link.title) {
           anchor.title = link.title;
@@ -34,8 +34,8 @@ class EvergreenConverter {
   }
 
   setImageElements(element, item) {
-    element.src = item.src;
-    element.alt = item.alt;
+    element.src = item.dest;
+    element.alt = item.text;
     element.title = item.title;
   };
 

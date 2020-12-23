@@ -39,7 +39,7 @@ class EvergreenProcessor {
     this.descMatch = new RegExp(/\(.+\)/);
 
     // Link information
-    this.linkMatch = new RegExp(/[^\!]\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
+    this.linkMatch = new RegExp(/(?<!\!)\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
 
     // Image information
     this.imageMatch = new RegExp(/!\[.+\]\(.+\)/);
@@ -107,23 +107,23 @@ class EvergreenProcessor {
     return this;
   };
 
-  parseLink(text, toTest = this.linkMatch, forwardReplace = '[', element = 'a', spaces = ' ') {
+  parseLink(text, toTest = this.linkMatch, forwardReplace = '[', element = 'a') {
     var match = toTest.exec(text)
 
     if (!match) { return { text } }
 
-    var alt = this.altMatch.exec(match[0])[0].replace(forwardReplace, '').replace(/]$/, '');
+    var linkText = this.altMatch.exec(match[0])[0].replace(forwardReplace, '').replace(/]$/, '');
     var linkInfo = this.descMatch.exec(match[0])[0].replace('(', '').replace(/\)$/, '').split(' ');
-    var href = linkInfo[0];
+    var dest = linkInfo[0];
     var title = linkInfo.slice(1).join(' ');
     var identifier = uuid();
-    var replaced = text.replace(match, `${spaces}${identifier}`);
+    var replaced = text.replace(match, `${identifier}`);
 
     return {
       text: replaced,
       child: {
-        alt,
-        href,
+        text: linkText,
+        dest,
         title,
         identifier,
         element,
@@ -133,28 +133,38 @@ class EvergreenProcessor {
   };
 
   parseImage(line) {
-    return this.parseLink(line, this.imageMatch, '![', 'img', '')
+    return this.parseLink(line, this.imageMatch, '![', 'img')
   }
 
   parseChildText(element, text) {
     var currentText = text;
-
-    while (this.linkMatch.test(currentText)) {
-      var { text: newText, child } = this.parseLink(currentText)
-      currentText = newText;
-      element.children.push(child);
+    while (this.linkMatch.test(currentText) || this.imageMatch.test(currentText)) {
+      if (this.imageMatch.test(currentText)) {
+        const { text, child } = this.parseImage(currentText);
+        currentText = text
+        if (text === child.identifier) {
+          element = child;
+        } else {
+          element.children.push(child)
+        }
+      } else {
+        var { text: newText, child } = this.parseLink(currentText)
+        currentText = newText;
+        element.children.push(child);
+      }
     }
 
-    return currentText;
+    return { element, text: currentText };
   };
 
   parseParagraph(line) {
-    var result = {
-      element: 'p',
-      children: []
-    };
+    var { element: result, text } = this.parseChildText({ element: 'p', children: [] }, line);
 
-    result.text = this.parseChildText(result, line)
+    if (result.element === 'img') {
+      return result
+    }
+
+    result.text = text
 
     if (this.identifierMatch.test(result.text)) {
       var { line, id, classes } = this.splitIdentifiersFromLine(result.text);
@@ -287,17 +297,6 @@ class EvergreenProcessor {
     var element;
     if (trimmed.startsWith('#')) {
       element = this.parseHeader(trimmed);
-    } else if (this.imageMatch.test(line)) {
-      const { text, child: link } = this.parseImage(line);
-      if (text === link.identifier) {
-        element = link;
-      } else {
-        element = {
-          element: 'p',
-          text,
-          children: [link],
-        };
-      }
     } else {
       element = this.parseParagraph(trimmed);
     }
@@ -313,12 +312,9 @@ class EvergreenProcessor {
     var listMatch = new RegExp(/^([0-9]+\.|(-|\+|\*))/);
     var text = line.replace(listMatch, '').trim();
 
-    var result = {
-      element: 'li',
-      children: []
-    };
+    var { element: result, text } = this.parseChildText({ element: 'li', children: [] }, text);
 
-    result.text = this.parseChildText(result, text);
+    result.text = text
 
     if (this.identifierMatch.test(result.text)) {
       var { line, id, classes } = this.splitIdentifiersFromLine(result.text);

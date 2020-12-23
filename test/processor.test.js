@@ -53,11 +53,11 @@ describe('Evergreen Processor', function () {
       const id1 = parsedParagraph.children[0].identifier;
       const id2 = parsedParagraph.children[1].identifier;
       assert.equal(parsedParagraph.text, `A paragraph ${id1} has at least ${id2} links.`);
-      assert.equal(parsedParagraph.children[0].href, 'title');
-      assert.equal(parsedParagraph.children[0].alt, 'that');
+      assert.equal(parsedParagraph.children[0].dest, 'title');
+      assert.equal(parsedParagraph.children[0].text, 'that');
       assert.equal(parsedParagraph.children[0].title, 'two links');
-      assert.equal(parsedParagraph.children[1].href, 'reffin');
-      assert.equal(parsedParagraph.children[1].alt, 'two');
+      assert.equal(parsedParagraph.children[1].dest, 'reffin');
+      assert.equal(parsedParagraph.children[1].text, 'two');
       assert.equal(parsedParagraph.children[1].title, '');
       assert.equal(parsedParagraph.id, 'id');
       assert.equal(parsedParagraph.classes.length, 3);
@@ -197,7 +197,7 @@ describe('Evergreen Processor', function () {
     });
 
     it('should be able to parse links in list items', function () {
-      const itemWithLinks = '1. A [link](to the past) {#id .class}';
+      const itemWithLinks = '1. [A link](to the past) {#id .class}';
       const processor = new EvergreenProcessor();
       const listItemElement = processor.parseListItem(itemWithLinks);
       assert.equal(listItemElement.element, 'li');
@@ -205,11 +205,27 @@ describe('Evergreen Processor', function () {
       assert.equal(listItemElement.classes.length, 1);
       assert.equal(listItemElement.classes[0], 'class');
       assert.equal(listItemElement.children.length, 1);
-      assert.equal(listItemElement.children[0].href, 'to');
-      assert.equal(listItemElement.children[0].alt, 'link');
+      assert.equal(listItemElement.children[0].dest, 'to');
+      assert.equal(listItemElement.children[0].text, 'A link');
       assert.equal(listItemElement.children[0].title, 'the past');
       const id = listItemElement.children[0].identifier;
-      assert.equal(listItemElement.text, `A ${id}`);
+      assert.equal(listItemElement.text, `${id}`);
+    });
+
+    it('should be able to process an image from a list item', function () {
+      const itemWithImage = '1. ![An image](to the past) {#id .class}';
+      const processor = new EvergreenProcessor();
+      const listItemElement = processor.parseListItem(itemWithImage);
+      assert.equal(listItemElement.element, 'li');
+      assert.equal(listItemElement.id, 'id');
+      assert.equal(listItemElement.classes.length, 1);
+      assert.equal(listItemElement.classes[0], 'class');
+      assert.equal(listItemElement.children.length, 1);
+      assert.equal(listItemElement.children[0].dest, 'to');
+      assert.equal(listItemElement.children[0].text, 'An image');
+      assert.equal(listItemElement.children[0].title, 'the past');
+      const id = listItemElement.children[0].identifier;
+      assert.equal(listItemElement.text, `${id}`);
     });
   });
 
@@ -381,8 +397,8 @@ describe('Evergreen Processor', function () {
       const imageElement = elements[0];
 
       assert.equal(imageElement.element, 'img');
-      assert.equal(imageElement.href, 'wild');
-      assert.equal(imageElement.alt, 'coyote');
+      assert.equal(imageElement.dest, 'wild');
+      assert.equal(imageElement.text, 'coyote');
       assert.equal(imageElement.title, 'was a movie');
     });
 
@@ -551,18 +567,18 @@ describe('Evergreen Processor', function () {
       const processor = new EvergreenProcessor();
       const inputText = 'A paragraph [that](title two links) has at least [two](reffin) links. {#id .c1 .c2 .c3}';
       const el = { children: [] }
-      const text = processor.parseChildText(el, inputText);
+      const { _, text } = processor.parseChildText(el, inputText);
 
       assert.equal(el.children.length, 2);
       const id1 = el.children[0].identifier;
       const id2 = el.children[1].identifier;
 
       assert.equal(text, `A paragraph ${id1} has at least ${id2} links. {#id .c1 .c2 .c3}`);
-      assert.equal(el.children[0].href, 'title');
-      assert.equal(el.children[0].alt, 'that');
+      assert.equal(el.children[0].dest, 'title');
+      assert.equal(el.children[0].text, 'that');
       assert.equal(el.children[0].title, 'two links');
-      assert.equal(el.children[1].href, 'reffin');
-      assert.equal(el.children[1].alt, 'two');
+      assert.equal(el.children[1].dest, 'reffin');
+      assert.equal(el.children[1].text, 'two');
       assert.equal(el.children[1].title, '');
     });
   });

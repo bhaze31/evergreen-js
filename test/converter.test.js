@@ -38,7 +38,7 @@ describe('Evergreen Converter', function () {
 
     it('can convert a link within a paragraph', function () {
       const parentElement = document.createElement('div');
-      const paragraph = { element: 'p', links: [{ href: 'title', text: 'throw', title: 'two links'}], text: 'Can we <a!>throw<!a> in a link?' };
+      const paragraph = { element: 'p', links: [{ dest: 'title', text: 'throw', title: 'two links'}], text: 'Can we <a!>throw<!a> in a link?' };
       const converter = new EvergreenConverter([paragraph]);
 
       converter.convert(parentElement);
@@ -69,7 +69,7 @@ describe('Evergreen Converter', function () {
   describe('image converted', function () {
     it('should convert image elements', function () {
       const parentElement = document.createElement('div');
-      const image = { element: 'img', src: 'aws_somewhere', alt: 'an image', title: 'grizzly bears' };
+      const image = { element: 'img', dest: 'aws_somewhere', text: 'an image', title: 'grizzly bears' };
       const converter = new EvergreenConverter([image]);
       converter.convert(parentElement);
       assert.equal(parentElement.innerHTML, '<img src="aws_somewhere" alt="an image" title="grizzly bears">');
@@ -90,7 +90,7 @@ describe('Evergreen Converter', function () {
       id: 'id',
       classes: ['c1', 'c2'],
       links: [{
-        href: 'srced',
+        dest: 'srced',
         text: 'World!'
       }],
     }];
