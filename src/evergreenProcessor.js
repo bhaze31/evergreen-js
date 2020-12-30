@@ -39,10 +39,10 @@ class EvergreenProcessor {
     this.descMatch = new RegExp(/\(.+\)/);
 
     // Link information
-    this.linkMatch = new RegExp(/(?<!\!)\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
+    this.linkMatch = new RegExp(/\[[\w\s"']+\]\([\w\s\/:\."']+\)/);
 
     // Image information
-    this.imageMatch = new RegExp(/!\[.+\]\(.+\)/);
+    this.imageMatch = new RegExp(/!\[.+\]\([\w\s\/:\."']\)/);
 
     // Link Image information
     this.linkImageMatch = new RegExp(/\[!\[[\w\s"']+\]\([\w\s\/:\."']+\)\]\([\w\s\/:\."']+\)/);
