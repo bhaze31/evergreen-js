@@ -38,7 +38,18 @@ describe('Evergreen Converter', function () {
 
     it('can convert a link within a paragraph', function () {
       const parentElement = document.createElement('div');
-      const paragraph = { element: 'p', links: [{ dest: 'title', text: 'throw', title: 'two links'}], text: 'Can we <a!>throw<!a> in a link?' };
+      const paragraph = {
+        element: 'p',
+        children: [{
+          element: 'a',
+          dest: 'title',
+          text: 'throw',
+          title: 'two links',
+          identifier: 'abcd1234'
+        }],
+        text: 'Can we abcd1234 in a link?'
+      };
+
       const converter = new EvergreenConverter([paragraph]);
 
       converter.convert(parentElement);
@@ -86,12 +97,14 @@ describe('Evergreen Converter', function () {
     // text that is given in the element.
     const listItems = [{
       element: 'li',
-      text: 'Hello <a!>World!<!a>',
+      text: 'Hello abcdefg',
       id: 'id',
       classes: ['c1', 'c2'],
-      links: [{
+      children: [{
+        element: 'a',
         dest: 'srced',
-        text: 'World!'
+        text: 'World!',
+        identifier: 'abcdefg'
       }],
     }];
 

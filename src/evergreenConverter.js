@@ -8,36 +8,27 @@ class EvergreenConverter {
     return this;
   };
 
-  setLinks(element, item) {
-    var innerText = item.text;
-
-    if (item.links && item.links.length > 0) {
-      item.links.forEach((link) => {
-        var anchor = document.createElement('a');
-        var anchorRegex = new RegExp(`<a!>${link.text}<!a>`);
-        anchor.href = link.dest;
-        anchor.innerText = link.text;
-        if (link.title) {
-          anchor.title = link.title;
-        }
-
-        innerText = innerText.replace(anchorRegex, anchor.outerHTML);
-      });
+  setExternal(element, item) {
+    if (item.element === 'img') {
+      element.src = item.dest;
+      element.alt = item.text;
+    } else {
+      element.href = item.dest;
+      element.innerText = item.text
     }
 
-    element.innerHTML = innerText;
-  };
+    if (item.title) {
+      element.title = item.title;
+    }
+
+    return element;
+  }
 
   setTableElements(element, item) {
     element.style.textAlign = item.alignment;
-    this.setLinks(element, item);
+    element.innerHTML = item.text;
+    this.setExternal(element, item);
   }
-
-  setImageElements(element, item) {
-    element.src = item.dest;
-    element.alt = item.text;
-    element.title = item.title;
-  };
 
   setIdentifiers(element, id, classes) {
     if (!!id) {
@@ -55,7 +46,8 @@ class EvergreenConverter {
     let element = document.createElement(item.element);
     switch (item.element) {
       case 'img':
-        this.setImageElements(element, item);
+      case 'a':
+        this.setExternal(element, item);
         break;
       case 'div':
       case 'blockquote':
@@ -71,7 +63,9 @@ class EvergreenConverter {
         this.setTableElements(element, item);
         break;
       default:
-        this.setLinks(element, item);
+        console.log(item.text);
+        element.innerHTML = item.text;
+        break;
     }
 
     this.setIdentifiers(element, item.id, item.classes);
