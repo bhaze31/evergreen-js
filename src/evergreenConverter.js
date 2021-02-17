@@ -63,7 +63,6 @@ class EvergreenConverter {
         this.setTableElements(element, item);
         break;
       default:
-        console.log(item.text);
         element.innerHTML = item.text;
         break;
     }
