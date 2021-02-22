@@ -620,6 +620,7 @@ describe('Evergreen Processor', function () {
         '```',
         'function hello() {',
         '  return "Hello World";',
+        '',
         '}',
         '```'
       ];
@@ -632,6 +633,31 @@ describe('Evergreen Processor', function () {
       const code = pre.children[0];
       assert.equal(code.element, 'code');
       assert.equal(code.text, 'function hello() {\n  return "Hello World";\n}');
-    })
+    });
+
+    it('should be able to escape html characters', function () {
+      const lines = [
+        '```',
+        '<!DOCTYPE html>',
+        '<html>',
+        '  <head>',
+        '    <link rel="stylesheet" type="text/css" />',
+        '  </head>',
+        '  <body>',
+        '    <h1>Hello World</h1>',
+        '  </body>',
+        '</html>',
+        '```'
+      ];
+      const processor = new EvergreenProcessor(lines);
+      const elements = processor.parse();
+      assert.equal(elements.length, 1);
+      const pre = elements[0];
+      assert.equal(pre.element, 'pre');
+      assert.equal(pre.children.length, 1);
+      const code = pre.children[0];
+      assert.equal(code.element, 'code');
+      assert.equal(code.text, '&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n  &lt;head&gt;\n    &lt;link rel="stylesheet" type="text/css" /&gt;\n  &lt;/head&gt;\n  &lt;body&gt;\n    &lt;h1&gt;Hello World&lt;/h1&gt;\n  &lt;/body&gt;\n&lt;/html&gt;');
+    });
   });
 });

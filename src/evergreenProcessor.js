@@ -75,6 +75,7 @@ class EvergreenProcessor {
     this.boldItalicMatch = new RegExp(/\*{3}[^\*]+\*{3}/);
 
     this.codeMatch = new RegExp(/^```/);
+    this.htmlMatch = new RegExp(/<[\/]?[^>]+>/)
     this.inCode = false;
     this.codeElement = null;
   };
@@ -636,12 +637,18 @@ class EvergreenProcessor {
   };
 
   addToCodeBlock(line) {
-      if (this.codeElement.text == "") {
-        this.codeElement.text = line
-      } else {
-        this.codeElement.text += `\n${line}`
-      }
+    let text = line;
+
+    while (this.htmlMatch.test(text)) {
+      text = text.replace('<', '&lt;').replace('>', '&gt;');
     }
+
+    if (this.codeElement.text == "") {
+      this.codeElement.text = text
+    } else {
+      this.codeElement.text += `\n${text}`
+    }
+  }
 
   addToElements(element) {
     if (this.inDiv) {
@@ -722,7 +729,9 @@ class EvergreenProcessor {
           this.addToElements(this.parseTextElement(line));
         }
       } else {
-        this.resetAllSpecialElements();
+        if (!this.inCode) {
+          this.resetAllSpecialElements();
+        }
       }
 
       if (this.breakMatch.test(line)) {
