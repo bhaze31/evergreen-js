@@ -729,7 +729,9 @@ class EvergreenProcessor {
           this.addToElements(this.parseTextElement(line));
         }
       } else {
-        if (!this.inCode) {
+        if (this.inCode) {
+          this.addToCodeBlock("")
+        } else {
           this.resetAllSpecialElements();
         }
       }

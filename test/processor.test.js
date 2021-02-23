@@ -632,7 +632,7 @@ describe('Evergreen Processor', function () {
       assert.equal(pre.children.length, 1);
       const code = pre.children[0];
       assert.equal(code.element, 'code');
-      assert.equal(code.text, 'function hello() {\n  return "Hello World";\n}');
+      assert.equal(code.text, 'function hello() {\n  return "Hello World";\n\n}');
     });
 
     it('should be able to escape html characters', function () {
@@ -644,6 +644,7 @@ describe('Evergreen Processor', function () {
         '    <link rel="stylesheet" type="text/css" />',
         '  </head>',
         '  <body>',
+        '',
         '    <h1>Hello World</h1>',
         '  </body>',
         '</html>',
@@ -657,7 +658,7 @@ describe('Evergreen Processor', function () {
       assert.equal(pre.children.length, 1);
       const code = pre.children[0];
       assert.equal(code.element, 'code');
-      assert.equal(code.text, '&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n  &lt;head&gt;\n    &lt;link rel="stylesheet" type="text/css" /&gt;\n  &lt;/head&gt;\n  &lt;body&gt;\n    &lt;h1&gt;Hello World&lt;/h1&gt;\n  &lt;/body&gt;\n&lt;/html&gt;');
+      assert.equal(code.text, '&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n  &lt;head&gt;\n    &lt;link rel="stylesheet" type="text/css" /&gt;\n  &lt;/head&gt;\n  &lt;body&gt;\n\n    &lt;h1&gt;Hello World&lt;/h1&gt;\n  &lt;/body&gt;\n&lt;/html&gt;');
     });
   });
 });
